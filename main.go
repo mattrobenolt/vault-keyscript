@@ -146,7 +146,10 @@ func newClient(args string) *Client {
 		// Create custom http.Client that has our root certificates bound to it
 		client: &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{RootCAs: rootCerts},
+				TLSClientConfig: &tls.Config{
+					RootCAs:    rootCerts,
+					ServerName: hostHeader,
+				},
 			},
 		},
 		host: hostHeader,
