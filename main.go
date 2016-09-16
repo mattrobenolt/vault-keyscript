@@ -17,7 +17,7 @@ import (
 )
 
 // Explicit list of DNS resolvers.
-var DNS_RESOLVERS = []string{
+var DNS_RESOLVERS = [...]string{
 	// Google
 	"8.8.8.8:53", "8.8.4.4:53",
 	// OpenDNS
