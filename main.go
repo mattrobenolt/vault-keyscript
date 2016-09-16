@@ -33,9 +33,9 @@ type ClientConfig struct {
 }
 
 type Client struct {
-	config *ClientConfig
-	client *http.Client
-	host   string // Actual Host header for HTTP requests
+	config     *ClientConfig
+	client     *http.Client
+	serverName string // Actual Host header for HTTP requests
 }
 
 // Take a full url as input, and resolve it to IP/Host pair.
@@ -62,10 +62,10 @@ func resolveURL(addr string) (string, string, error) {
 	}
 
 	// Save a reference for the actual Host needed in the header
-	hostHeader := u.Host
+	serverName := u.Host
 	u.Host = net.JoinHostPort(host, port)
 
-	return u.String(), hostHeader, nil
+	return u.String(), serverName, nil
 }
 
 // Take a hostname, and attempt to give us back the first
@@ -132,7 +132,7 @@ func newClient(args string) *Client {
 	// it's possible it can't resolve either. So we are
 	// opting to do this in pure Go and do this ourselves
 	// to avoid the issue entirely.
-	vaultAddr, hostHeader, err := resolveURL(m["vault_addr"])
+	vaultAddr, serverName, err := resolveURL(m["vault_addr"])
 	maybeWups(err)
 
 	return &Client{
@@ -148,11 +148,11 @@ func newClient(args string) *Client {
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
 					RootCAs:    rootCerts,
-					ServerName: hostHeader,
+					ServerName: serverName,
 				},
 			},
 		},
-		host: hostHeader,
+		serverName: serverName,
 	}
 }
 
@@ -163,8 +163,8 @@ func (c *Client) request(method, path string, body []byte) (*http.Response, erro
 		return nil, err
 	}
 	// Bind back correct Host for use with Host header
-	req.Host = c.host
-	req.Header.Add("Host", c.host)
+	req.Host = c.serverName
+	req.Header.Add("Host", c.serverName)
 
 	if c.config.token != "" {
 		req.Header.Add("X-Vault-Token", c.config.token)
