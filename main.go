@@ -24,6 +24,16 @@ var DNS_RESOLVERS = [...]string{
 	"208.67.222.222:53", "208.67.220.220:53",
 }
 
+type Args map[string]string
+
+func (a Args) Get(key string) string {
+	if v, ok := a[key]; ok {
+		return v
+	}
+	wups(fmt.Sprintf("missing required argument: %s", key))
+	panic("lol")
+}
+
 type ClientConfig struct {
 	vaultAddr string
 	roleId    string
@@ -95,13 +105,13 @@ func resolveHost(hostname string) (string, error) {
 
 // Take input in the form:
 // 	key1=value;key2=value
-func splitArgs(args string, sep string) map[string]string {
+func splitArgs(args string, sep string) Args {
 	m := make(map[string]string)
 	for _, bit := range strings.Split(args, sep) {
 		pair := strings.SplitN(bit, "=", 2)
 		m[pair[0]] = pair[1]
 	}
-	return m
+	return Args(m)
 }
 
 func maybeWups(err error) {
@@ -132,14 +142,14 @@ func newClient(args string) *Client {
 	// it's possible it can't resolve either. So we are
 	// opting to do this in pure Go and do this ourselves
 	// to avoid the issue entirely.
-	vaultAddr, serverName, err := resolveURL(m["vault_addr"])
+	vaultAddr, serverName, err := resolveURL(m.Get("vault_addr"))
 	maybeWups(err)
 
 	return &Client{
 		config: &ClientConfig{
-			roleId:    m["role_id"],
-			uuid:      m["uuid"],
-			hostname:  m["hostname"],
+			roleId:    m.Get("role_id"),
+			uuid:      m.Get("uuid"),
+			hostname:  m.Get("hostname"),
 			vaultAddr: vaultAddr,
 			token:     "",
 		},
